@@ -1053,7 +1053,11 @@ tfile fd都是要监听文件的标识符
 - epoll的ctl函数作用是 新增修改与删除一个监听。主要在红黑树与ep-wq中删除相应的item与等待进程。
 - 核心的原理是，epoll之所以能够拿到这些发生的fds，是因为这些fds有状态变化的回调函数。所以ep_insert的目的是：
 1、为tfd生成epitem，并插入rb tree；
-2、
+2、revents = tfile->f_op->poll(tfile, &epq.pt); 是核心与灵魂。对于TCP来说，会将ep_pqueue这个结构注册到一个tcp连接的状态变化回调函数中去，对于epoll来说，当状态变更的时候，
+实际会调用（ep_poll_callback）函数。
+3、ep_poll_callback 函数的作用就是通过epg对象找到epitme，进而找到ep对象，因为里面有个wq的等待队列，里面有wait的线程需要在ep这个队列里面唤醒。所以唤醒点在这里。
+4、还有一步，就是ep->wq什么时候插入？对了，就是通过sys_epoll_wait插入的。这两个步骤是分离的。
+
 */ 
 static int ep_insert(struct eventpoll *ep, struct epoll_event *event,
 		     struct file *tfile, int fd)

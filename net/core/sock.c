@@ -1390,6 +1390,28 @@ ssize_t sock_no_sendpage(struct socket *sock, struct page *page, int offset, siz
 static void sock_def_wakeup(struct sock *sk)
 {
 	read_lock(&sk->sk_callback_lock);
+	/* 
+	这个函数就是唤醒所有等待在sk_sleep的线程
+    wake_up_interruptible_all 函数其实没有唤醒功能，也就是不会调用try_wake_up函数去正式唤醒
+	而是调用
+
+	struct __wait_queue {
+	unsigned int flags;
+#define WQ_FLAG_EXCLUSIVE	0x01
+	void *private;
+	wait_queue_func_t func;
+	struct list_head task_list;
+};
+	sk_sleep的成员中的回调函数。往往在这个__wait_queue中会有func需要设置，那么这里就可以做唤醒。
+	也就是说，sk_sleep中的每个元素都代表一个线程。*private 往往设置的时task_struct。
+
+	static inline void init_waitqueue_entry(wait_queue_t *q, struct task_struct *p)
+{
+	q->flags = 0;
+	q->private = p;
+	q->func = default_wake_function;
+}
+	 */
 	if (sk->sk_sleep && waitqueue_active(sk->sk_sleep))
 		wake_up_interruptible_all(sk->sk_sleep);
 	read_unlock(&sk->sk_callback_lock);

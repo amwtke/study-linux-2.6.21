@@ -1056,7 +1056,7 @@ tfile fd都是要监听文件的标识符
 2、revents = tfile->f_op->poll(tfile, &epq.pt); 是核心与灵魂。对于TCP来说，会将ep_pqueue这个结构注册到一个tcp连接的状态变化回调函数中去，对于epoll来说，当状态变更的时候，
 实际会调用（ep_poll_callback）函数。
 3、ep_poll_callback 函数的作用就是通过epg对象找到epitme，进而找到ep对象，因为里面有个wq的等待队列，里面有wait的线程需要在ep这个队列里面唤醒。所以唤醒点在这里。
-4、还有一步，就是ep->wq什么时候插入？对了，就是通过sys_epoll_wait插入的。这两个步骤是分离的。
+4、还有一步，就是ep->wq什么时候插入？对了，就是通过sys_epoll_wait插入的。这两个步骤是分离的。主要通过 init_waitqueue_entry(&wait, current); 初始化一个wait_t，一个linux中通用的等待结构,中间可以插入回调函数比如ep_poll_callback，还可以放入task_struct标致哪个线程要被唤醒。
 
 */ 
 static int ep_insert(struct eventpoll *ep, struct epoll_event *event,

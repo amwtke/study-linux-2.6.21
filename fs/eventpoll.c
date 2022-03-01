@@ -414,6 +414,8 @@ static void ep_poll_safewake_init(struct poll_safewake *psw)
  * EP_MAX_POLLWAKE_NESTS deep. We need the irq version of the spin lock
  * because this one gets called by the poll callback, that in turn is called
  * from inside a wake_up(), that might be called from irq context.
+ * 
+ * epoll调用epoll的唤醒函数，调用也是点在ep_poll_callback 里面。
  */
 static void ep_poll_safewake(struct poll_safewake *psw, wait_queue_head_t *wq)
 {
@@ -1451,6 +1453,9 @@ is_linked:
 	if (waitqueue_active(&ep->wq))
 		__wake_up_locked(&ep->wq, TASK_UNINTERRUPTIBLE |
 				 TASK_INTERRUPTIBLE);
+
+/* xiaojin - 当ctl-add了另一个epoll fd的时候，在这里被唤醒。
+ */
 	if (waitqueue_active(&ep->poll_wait))
 		pwake++;
 

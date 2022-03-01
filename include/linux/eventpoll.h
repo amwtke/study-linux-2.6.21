@@ -47,7 +47,7 @@
 
 struct epoll_event {
 	__u32 events;
-	__u64 data;
+	__u64 data; //包含了发生变化的fd。
 } EPOLL_PACKED;
 
 #ifdef __KERNEL__

@@ -1036,8 +1036,25 @@ static void ep_rbtree_insert(struct eventpoll *ep, struct epitem *epi)
 
 /*
 tfile fd都是要监听文件的标识符
+在这里会生成epitem结构
+1、这个结构是红黑树的值部分，其实就是用file的地址来进行排序存放的
+2、每个要放入epoll管理的fd都有一个唯一的epitem对象，放在红黑树中
+3、这个结构存放着 eventpoll 的指针，红黑树就在这个结构中，这个结构是epoll文件系统的private。重要的伴生对象。
+4、epoll的原理：
+- 注册一个efd的文件
+- 在文件中绑定一个eventpoll的结构，这个结构整个efd中只有一个，放在efd的private结构中
+- eventpoll结构中的wq是比较重要的，是等待列表。当调用sys_epoll_wait的时候，就是将当前线程链接到这个链表中。最后被唤醒。
+- evenpoll结构中还有一个红黑树的根。所有通过sys_epoll_ctl注册到这里的fd都挂在这个树上。当sys_epoll_ctl调用时，先去这棵树上找到相应的item，然后该修改的修改，该新建的新建。
 
-*/
+- epoll的目的是管理一堆的fd的状态变更，一堆可以是几十或者上百万的fd
+- 通过调用wait函数，可以阻塞等待；函数返回以后可以得到发生了变化的fds。这个对象是 struct epoll_event *event,从内核拷贝到用户态的。所以这个结构会比较紧凑。
+- 通过调用wait函数还可以将当前进程加入阻塞队列，在wake的时候（try_wake_up()）就知道要唤醒哪个线程。
+
+- epoll的ctl函数作用是 新增修改与删除一个监听。主要在红黑树与ep-wq中删除相应的item与等待进程。
+- 核心的原理是，epoll之所以能够拿到这些发生的fds，是因为这些fds有状态变化的回调函数。所以ep_insert的目的是：
+1、为tfd生成epitem，并插入rb tree；
+2、
+*/ 
 static int ep_insert(struct eventpoll *ep, struct epoll_event *event,
 		     struct file *tfile, int fd)
 {
@@ -1087,7 +1104,7 @@ static int ep_insert(struct eventpoll *ep, struct epoll_event *event,
 	 */
 
 	/* 
-	当然也可以不等待，
+	poll当然也可以不等待，
 	只是设置回调函数
 	 */
 	revents = tfile->f_op->poll(tfile, &epq.pt);

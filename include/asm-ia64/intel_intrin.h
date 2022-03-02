@@ -12,9 +12,7 @@
 
 #define ia64_barrier()		__memory_barrier()
 
-#define ia64_stop()	/* Nothing: As of now stop bit is generated for each
-		 	 * intrinsic
-		 	 */
+#define ia64_stop()	/* Nothing: As of now stop bit is generated for each intrinsic */
 
 #define ia64_getreg		__getReg
 #define ia64_setreg		__setReg
@@ -74,6 +72,13 @@
 #define ia64_cmpxchg2_rel	_InterlockedCompareExchange16_rel
 #define ia64_cmpxchg2_acq	_InterlockedCompareExchange16_acq
 #define ia64_cmpxchg4_rel	_InterlockedCompareExchange_rel
+/* 
+gcc的相关优化，
+intel CPU有些内联的指令
+直接编译到汇编，减小函数的开销。
+
+相关信息可以搜索 Intel intrinsics
+ */
 #define ia64_cmpxchg4_acq	_InterlockedCompareExchange_acq
 #define ia64_cmpxchg8_rel	_InterlockedCompareExchange64_rel
 #define ia64_cmpxchg8_acq	_InterlockedCompareExchange64_acq

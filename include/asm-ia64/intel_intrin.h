@@ -77,7 +77,7 @@ gcc的相关优化，
 intel CPU有些内联的指令
 直接编译到汇编，减小函数的开销。
 
-相关信息可以搜索 Intel intrinsics
+相关信息可以搜索 Intel intrinsics _InterlockedCompareExchange_acq
  */
 #define ia64_cmpxchg4_acq	_InterlockedCompareExchange_acq
 #define ia64_cmpxchg8_rel	_InterlockedCompareExchange64_rel

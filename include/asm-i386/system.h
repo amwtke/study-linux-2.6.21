@@ -21,8 +21,8 @@ extern struct task_struct * FASTCALL(__switch_to(struct task_struct *prev, struc
 		     "pushl %%ebp\n\t"					\
 		     "movl %%esp,%0\n\t"	/* save ESP */		\
 		     "movl %5,%%esp\n\t"	/* restore ESP */	\
-		     "movl $1f,%1\n\t"		/* save EIP */		\
-		     "pushl %6\n\t"		/* restore EIP */	\
+		     "movl $1f,%1\n\t"		/* save EIP save到thread_info.eip */		\
+		     "pushl %6\n\t"		/* restore EIP save到内核栈上*/	\
 		     "jmp __switch_to\n"				\
 		     "1:\t"						\
 		     "popl %%ebp\n\t"					\
